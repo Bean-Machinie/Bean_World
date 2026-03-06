@@ -21,6 +21,7 @@ public class GameplayScreen : Screen
     private Camera2D _camera = null!;
     private EntityManager _entityManager = null!;
     private Player _player = null!;
+    private SpriteFont _font = null!;
     private TileMap _tileMap = null!;
     private TileRegistry _registry = null!;
     private TileMapRenderer _tileMapRenderer = null!;
@@ -32,6 +33,7 @@ public class GameplayScreen : Screen
     {
         var graphicsDevice = ServiceLocator.Get<GraphicsDevice>();
         var input = ServiceLocator.Get<InputManager>();
+        _font = Assets.Load<SpriteFont>(FontAssets.Default);
 
         _camera = new Camera2D(graphicsDevice.Viewport);
         _entityManager = new EntityManager();
@@ -73,6 +75,9 @@ public class GameplayScreen : Screen
                                    _tileMap.MapHeight * _tileMap.TileHeight / 2f);
         _player = new Player(spawnPos, input, rect => _tileMap.OverlapsSolid(rect, _registry));
         _entityManager.Add(_player);
+        _entityManager.Add(new Enemy(spawnPos + new Vector2(-96f, -64f), _player, rect => _tileMap.OverlapsSolid(rect, _registry)));
+        _entityManager.Add(new Enemy(spawnPos + new Vector2(112f, 32f), _player, rect => _tileMap.OverlapsSolid(rect, _registry)));
+        _entityManager.Add(new Enemy(spawnPos + new Vector2(32f, -128f), _player, rect => _tileMap.OverlapsSolid(rect, _registry)));
 
         _camera.CenterOn(_player.Position);
     }
@@ -87,6 +92,22 @@ public class GameplayScreen : Screen
         }
 
         _entityManager.Update(gameTime);
+
+        if (_player.AttackBounds is Rectangle attackBounds)
+        {
+            foreach (var enemy in _entityManager.Entities.OfType<Enemy>())
+            {
+                if (enemy.IsAlive && attackBounds.Intersects(enemy.Bounds))
+                    enemy.TakeDamage(1);
+            }
+        }
+
+        if (!_player.IsAlive)
+        {
+            ScreenManager.Push(new GameOverScreen(ScreenManager, Assets));
+            return;
+        }
+
         _camera.CenterOn(_player.Position);
         _camera.Clamp(_tileMap.Bounds);
     }
@@ -99,6 +120,10 @@ public class GameplayScreen : Screen
         _entityManager.Draw(spriteBatch);
         // TODO: overlay layer draw here (Step 4)
 
+        spriteBatch.End();
+
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        spriteBatch.DrawString(_font, $"HP: {_player.Health}/{_player.MaxHealth}", new Vector2(12, 10), Color.White);
         spriteBatch.End();
     }
 }
