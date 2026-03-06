@@ -1,0 +1,32 @@
+[
+  {
+    "Id": 1,
+    "Name": "Grass",
+    "SourceX": 0,
+    "SourceY": 0,
+    "SourceWidth": 16,
+    "SourceHeight": 16,
+    "IsSolid": false,
+    "IsWater": false,
+    "IsHazard": false,
+    "IsAnimated": false,
+    "AnimationFrameCount": 1,
+    "AnimationFrameDuration": 0.1,
+    "Properties": {}
+  },
+  {
+    "Id": 2,
+    "Name": "Stone",
+    "SourceX": 16,
+    "SourceY": 0,
+    "SourceWidth": 16,
+    "SourceHeight": 16,
+    "IsSolid": true,
+    "IsWater": false,
+    "IsHazard": false,
+    "IsAnimated": false,
+    "AnimationFrameCount": 1,
+    "AnimationFrameDuration": 0.1,
+    "Properties": {}
+  }
+]

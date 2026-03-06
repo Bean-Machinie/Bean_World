@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# MonoGame content pipeline cache
+**/Content/bin/
+**/Content/obj/
+
+# User settings override (stored in %AppData%, not in repo)
+# The shipped defaults in Content/Data/ ARE committed
+
+# OS
+.DS_Store
+Thumbs.db

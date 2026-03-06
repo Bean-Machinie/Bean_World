@@ -1,0 +1,10 @@
+{
+  "ResolutionWidth": 1280,
+  "ResolutionHeight": 720,
+  "IsFullscreen": false,
+  "ShowFps": false,
+  "MasterVolume": 1.0,
+  "MusicVolume": 0.8,
+  "SfxVolume": 1.0,
+  "TargetTileSize": 16
+}

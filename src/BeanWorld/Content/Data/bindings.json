@@ -1,0 +1,26 @@
+{
+  "Keyboard": {
+    "MoveUp": "W",
+    "MoveDown": "S",
+    "MoveLeft": "A",
+    "MoveRight": "D",
+    "Confirm": "Enter",
+    "Cancel": "Escape",
+    "Interact": "E",
+    "Pause": "Escape",
+    "OpenInventory": "I",
+    "OpenMap": "M"
+  },
+  "Gamepad": {
+    "MoveUp": "DPadUp",
+    "MoveDown": "DPadDown",
+    "MoveLeft": "DPadLeft",
+    "MoveRight": "DPadRight",
+    "Confirm": "A",
+    "Cancel": "B",
+    "Interact": "X",
+    "Pause": "Start",
+    "OpenInventory": "Y",
+    "OpenMap": "Back"
+  }
+}
