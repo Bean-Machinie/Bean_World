@@ -65,4 +65,36 @@ public class TileMap
     /// <summary>Returns true if the tile coordinates are within the map grid.</summary>
     public bool IsInBounds(int tileX, int tileY) =>
         tileX >= 0 && tileX < MapWidth && tileY >= 0 && tileY < MapHeight;
+
+    // ── Collision ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns true if <paramref name="worldBounds"/> overlaps any solid tile on any layer.
+    /// Out-of-bounds tile positions are treated as solid so entities cannot leave the map.
+    /// </summary>
+    public bool OverlapsSolid(Rectangle worldBounds, TileRegistry registry)
+    {
+        int left   = (int)Math.Floor((float)worldBounds.Left          / TileWidth);
+        int right  = (int)Math.Floor((float)(worldBounds.Right  - 1)  / TileWidth);
+        int top    = (int)Math.Floor((float)worldBounds.Top           / TileHeight);
+        int bottom = (int)Math.Floor((float)(worldBounds.Bottom - 1)  / TileHeight);
+
+        for (int ty = top; ty <= bottom; ty++)
+        {
+            for (int tx = left; tx <= right; tx++)
+            {
+                if (!IsInBounds(tx, ty)) return true; // treat out-of-bounds as solid
+
+                foreach (var layer in _layers)
+                {
+                    if (!layer.IsVisible) continue;
+                    var id = layer.GetTileId(tx, ty);
+                    if (id != 0 && registry.TryGet(id, out var def) && def!.IsSolid)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

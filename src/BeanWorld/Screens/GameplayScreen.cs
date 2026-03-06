@@ -21,6 +21,7 @@ public class GameplayScreen : Screen
     private EntityManager _entityManager = null!;
     private Player _player = null!;
     private TileMap _tileMap = null!;
+    private TileRegistry _registry = null!;
     private TileMapRenderer _tileMapRenderer = null!;
 
     public GameplayScreen(ScreenManager screenManager, AssetManager assets)
@@ -35,8 +36,8 @@ public class GameplayScreen : Screen
         _entityManager = new EntityManager();
 
         // ── Tile registry ────────────────────────────────────────────────────
-        var registry = new TileRegistry();
-        registry.LoadFromJson(Path.Combine(AppContext.BaseDirectory, "Content", "Data", "tiles.json"));
+        _registry = new TileRegistry();
+        _registry.LoadFromJson(Path.Combine(AppContext.BaseDirectory, "Content", "Data", "tiles.json"));
 
         // ── Procedural tileset texture (32×16: grass left, stone right) ─────
         // Swap this block for Assets.Load<Texture2D>(TextureAssets.Tileset) when real art is ready.
@@ -51,7 +52,7 @@ public class GameplayScreen : Screen
         }
         tilesetTexture.SetData(pixels);
 
-        _tileMapRenderer = new TileMapRenderer(registry, tilesetTexture);
+        _tileMapRenderer = new TileMapRenderer(_registry, tilesetTexture);
 
         // ── Test map: 100×60 grass field with a stone border ────────────────
         // 100×60 tiles × 16px = 1600×960px — larger than the 1280×720 viewport so the camera scrolls.
@@ -69,7 +70,7 @@ public class GameplayScreen : Screen
         // ── Player spawns at map center ──────────────────────────────────────
         var spawnPos = new Vector2(_tileMap.MapWidth * _tileMap.TileWidth / 2f,
                                    _tileMap.MapHeight * _tileMap.TileHeight / 2f);
-        _player = new Player(spawnPos, input);
+        _player = new Player(spawnPos, input, rect => _tileMap.OverlapsSolid(rect, _registry));
         _entityManager.Add(_player);
 
         _camera.CenterOn(_player.Position);

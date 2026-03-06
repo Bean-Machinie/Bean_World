@@ -11,13 +11,16 @@ public class Player : Entity
     private const int Size = 16;      // matches default TargetTileSize
 
     private readonly InputManager _input;
+    private readonly Func<Rectangle, bool> _isSolid;
     private Texture2D _texture = null!;
 
     public override Rectangle Bounds => new((int)Position.X, (int)Position.Y, Size, Size);
 
-    public Player(Vector2 startPosition, InputManager input) : base(startPosition)
+    public Player(Vector2 startPosition, InputManager input, Func<Rectangle, bool> isSolid)
+        : base(startPosition)
     {
         _input = input;
+        _isSolid = isSolid;
     }
 
     public override void LoadContent()
@@ -29,9 +32,17 @@ public class Player : Entity
 
     public override void Update(GameTime gameTime)
     {
-        var movement = _input.GetMovementVector();
-        if (movement != Vector2.Zero)
-            Position += movement * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var delta = _input.GetMovementVector() * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (delta == Vector2.Zero) return;
+
+        // Axis-separated collision so the player can slide along walls
+        var newX = Position with { X = Position.X + delta.X };
+        if (!_isSolid(new Rectangle((int)newX.X, (int)newX.Y, Size, Size)))
+            Position = newX;
+
+        var newY = Position with { Y = Position.Y + delta.Y };
+        if (!_isSolid(new Rectangle((int)newY.X, (int)newY.Y, Size, Size)))
+            Position = newY;
     }
 
     public override void Draw(SpriteBatch spriteBatch)
