@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Bean World",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/BeanWorld/bin/Debug/net8.0/BeanWorld.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/BeanWorld/bin/Debug/net8.0",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}

@@ -39,11 +39,12 @@ public class BeanWorldGame : Game
     {
         // Settings must be loaded first so resolution is applied before the window is shown
         _settingsManager = new SettingsManager();
-        _settingsManager.Load(shippedDefaultsPath: Path.Combine(Content.RootDirectory, "Data", "settings.json"));
+        var dataDir = Path.Combine(AppContext.BaseDirectory, Content.RootDirectory, "Data");
+        _settingsManager.Load(shippedDefaultsPath: Path.Combine(dataDir, "settings.json"));
         _settingsManager.ApplyToGraphics(_graphics);
 
         // Load input bindings (falls back to hardcoded defaults if file is missing)
-        var bindingsPath = Path.Combine(Content.RootDirectory, "Data", "bindings.json");
+        var bindingsPath = Path.Combine(dataDir, "bindings.json");
         var bindings = File.Exists(bindingsPath)
             ? InputBindings.LoadFromJson(File.ReadAllText(bindingsPath))
             : InputBindings.CreateDefault();
