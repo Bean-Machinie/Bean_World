@@ -7,6 +7,7 @@
     "Confirm": "Enter",
     "Cancel": "Escape",
     "Interact": "E",
+    "Attack": "Space",
     "Pause": "Escape",
     "OpenInventory": "I",
     "OpenMap": "M"
@@ -19,6 +20,7 @@
     "Confirm": "A",
     "Cancel": "B",
     "Interact": "X",
+    "Attack": "RightShoulder",
     "Pause": "Start",
     "OpenInventory": "Y",
     "OpenMap": "Back"

@@ -17,6 +17,7 @@ public enum GameAction
     Confirm,
     Cancel,
     Interact,
+    Attack,
 
     // Meta
     Pause,

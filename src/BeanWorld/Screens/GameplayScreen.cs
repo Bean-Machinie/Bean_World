@@ -8,6 +8,7 @@ using BeanWorld.World.Entities;
 using BeanWorld.World.Tiles;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 
 namespace BeanWorld.Screens;
 
