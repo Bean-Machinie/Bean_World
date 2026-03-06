@@ -32,6 +32,7 @@ public class BeanWorldGame : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        Window.Title = "Bean World";
     }
 
     protected override void Initialize()
@@ -63,6 +64,7 @@ public class BeanWorldGame : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         ServiceLocator.Register(_spriteBatch);
+        ServiceLocator.Register(GraphicsDevice);
 
         _screenManager.Push(new MainMenuScreen(_screenManager, _assetManager));
     }

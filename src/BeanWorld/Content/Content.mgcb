@@ -12,6 +12,11 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Fonts/default_font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/build:Fonts/default_font.spritefont
+
 # Add textures, fonts, and audio here as they are created.
 # Example:
 #   #begin Textures/tileset.png

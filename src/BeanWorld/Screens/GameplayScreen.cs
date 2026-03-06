@@ -1,5 +1,8 @@
 using BeanWorld.Assets;
+using BeanWorld.Camera;
 using BeanWorld.Core.Screen;
+using BeanWorld.Core.Services;
+using BeanWorld.Input;
 using BeanWorld.World.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,33 +15,41 @@ namespace BeanWorld.Screens;
 /// </summary>
 public class GameplayScreen : Screen
 {
+    private Camera2D _camera = null!;
     private EntityManager _entityManager = null!;
+    private Player _player = null!;
 
     public GameplayScreen(ScreenManager screenManager, AssetManager assets)
         : base(screenManager, assets) { }
 
     public override void LoadContent()
     {
+        var graphicsDevice = ServiceLocator.Get<GraphicsDevice>();
+        var input = ServiceLocator.Get<InputManager>();
+
+        _camera = new Camera2D(graphicsDevice.Viewport);
         _entityManager = new EntityManager();
+
+        _player = new Player(new Vector2(100, 100), input);
+        _entityManager.Add(_player);
+
+        _camera.CenterOn(_player.Position);
 
         // TODO: load TileRegistry from Content/Data/tiles.json
         // TODO: construct TileMap for the starting area
-        // TODO: create Camera2D(GraphicsDevice.Viewport) and CenterOn map center
-        // TODO: create and add player entity via _entityManager.Add(...)
     }
 
     public override void Update(GameTime gameTime, bool isTopScreen)
     {
         _entityManager.Update(gameTime);
+        _camera.CenterOn(_player.Position);
 
-        // TODO: camera.CenterOn(player.Position)
-        // TODO: camera.Clamp(tileMap.Bounds)
+        // TODO: _camera.Clamp(tileMap.Bounds)
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        // TODO: spriteBatch.Begin(transformMatrix: camera.GetTransform(), samplerState: SamplerState.PointClamp)
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        spriteBatch.Begin(transformMatrix: _camera.GetTransform(), samplerState: SamplerState.PointClamp);
 
         // TODO: tileMapRenderer.Draw(spriteBatch, tileMap, camera)  -- ground layers
         _entityManager.Draw(spriteBatch);
