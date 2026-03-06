@@ -77,6 +77,13 @@ public class GameplayScreen : Screen
 
     public override void Update(GameTime gameTime, bool isTopScreen)
     {
+        var input = ServiceLocator.Get<InputManager>();
+        if (input.IsActionPressed(GameAction.Pause))
+        {
+            ScreenManager.Push(new PauseScreen(ScreenManager, Assets));
+            return;
+        }
+
         _entityManager.Update(gameTime);
         _camera.CenterOn(_player.Position);
         _camera.Clamp(_tileMap.Bounds);
