@@ -53,4 +53,10 @@ public class EntityManager
         _entities.Clear();
         _pendingAdd.Clear();
     }
+
+    public void RemoveAll(Predicate<Entity> match)
+    {
+        _entities.RemoveAll(match);
+        _pendingAdd.RemoveAll(match);
+    }
 }
