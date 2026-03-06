@@ -53,8 +53,9 @@ public class GameplayScreen : Screen
 
         _tileMapRenderer = new TileMapRenderer(registry, tilesetTexture);
 
-        // ── Test map: 40×25 grass field with a stone border ─────────────────
-        _tileMap = new TileMap(mapWidth: 40, mapHeight: 25, tileWidth: 16, tileHeight: 16);
+        // ── Test map: 100×60 grass field with a stone border ────────────────
+        // 100×60 tiles × 16px = 1600×960px — larger than the 1280×720 viewport so the camera scrolls.
+        _tileMap = new TileMap(mapWidth: 100, mapHeight: 60, tileWidth: 16, tileHeight: 16);
         var ground = _tileMap.AddLayer("Ground");
         for (int y = 0; y < _tileMap.MapHeight; y++)
         {
