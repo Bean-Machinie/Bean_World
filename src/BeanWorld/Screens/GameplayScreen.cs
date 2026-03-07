@@ -55,7 +55,7 @@ public class GameplayScreen : Screen
         _roomRun = new RoomRun(BuildRooms());
         _roomRun.Start();
 
-        _player = new Player(Vector2.Zero, input, rect => _tileMap.OverlapsSolid(rect, _registry));
+        _player = new Player(Vector2.Zero, input, Assets, rect => _tileMap.OverlapsSolid(rect, _registry));
         _entityManager.Add(_player);
 
         LoadCurrentRoom();
@@ -166,15 +166,16 @@ public class GameplayScreen : Screen
 
     private static Texture2D BuildDebugTileset(GraphicsDevice graphicsDevice)
     {
-        var tilesetTexture = new Texture2D(graphicsDevice, 32, 16);
-        var pixels = new Color[32 * 16];
+        // Two 32×32 tiles side by side: grass (left) and stone (right) → 64×32 texture
+        var tilesetTexture = new Texture2D(graphicsDevice, 64, 32);
+        var pixels = new Color[64 * 32];
         var grassColor = new Color(34, 139, 34);
         var stoneColor = new Color(100, 100, 100);
 
-        for (int y = 0; y < 16; y++)
+        for (int y = 0; y < 32; y++)
         {
-            for (int x = 0; x < 32; x++)
-                pixels[y * 32 + x] = x < 16 ? grassColor : stoneColor;
+            for (int x = 0; x < 64; x++)
+                pixels[y * 64 + x] = x < 32 ? grassColor : stoneColor;
         }
 
         tilesetTexture.SetData(pixels);
@@ -186,11 +187,11 @@ public class GameplayScreen : Screen
         CreateRoom(
             mapWidth: 30,
             mapHeight: 20,
-            playerSpawn: new Vector2(28, 152),
+            playerSpawn: new Vector2(56, 304),
             enemySpawns:
             [
-                new Vector2(240, 120),
-                new Vector2(300, 180)
+                new Vector2(480, 240),
+                new Vector2(600, 360)
             ],
             extraSolidTiles:
             [
@@ -201,12 +202,12 @@ public class GameplayScreen : Screen
         CreateRoom(
             mapWidth: 28,
             mapHeight: 18,
-            playerSpawn: new Vector2(28, 136),
+            playerSpawn: new Vector2(56, 272),
             enemySpawns:
             [
-                new Vector2(210, 90),
-                new Vector2(250, 130),
-                new Vector2(220, 170)
+                new Vector2(420, 180),
+                new Vector2(500, 260),
+                new Vector2(440, 340)
             ],
             extraSolidTiles:
             [
@@ -216,12 +217,12 @@ public class GameplayScreen : Screen
         CreateRoom(
             mapWidth: 32,
             mapHeight: 20,
-            playerSpawn: new Vector2(28, 152),
+            playerSpawn: new Vector2(56, 304),
             enemySpawns:
             [
-                new Vector2(260, 95),
-                new Vector2(320, 150),
-                new Vector2(260, 205)
+                new Vector2(520, 190),
+                new Vector2(640, 300),
+                new Vector2(520, 410)
             ],
             extraSolidTiles:
             [
@@ -239,7 +240,7 @@ public class GameplayScreen : Screen
         IEnumerable<Vector2> enemySpawns,
         IEnumerable<Point> extraSolidTiles)
     {
-        var tileMap = new TileMap(mapWidth, mapHeight, tileWidth: 16, tileHeight: 16);
+        var tileMap = new TileMap(mapWidth, mapHeight, tileWidth: 32, tileHeight: 32);
         var ground = tileMap.AddLayer("Ground");
 
         for (int y = 0; y < mapHeight; y++)
@@ -254,7 +255,7 @@ public class GameplayScreen : Screen
         foreach (var tile in extraSolidTiles)
             ground.SetTileId(tile.X, tile.Y, 2);
 
-        var exitTrigger = new Rectangle(tileMap.Bounds.Right - 48, tileMap.Bounds.Center.Y - 40, 24, 80);
+        var exitTrigger = new Rectangle(tileMap.Bounds.Right - 96, tileMap.Bounds.Center.Y - 80, 48, 160);
         return new CombatRoom(tileMap, exitTrigger, playerSpawn, enemySpawns);
     }
 }
