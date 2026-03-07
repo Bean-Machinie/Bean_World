@@ -9,37 +9,44 @@ namespace BeanWorld.World.Entities;
 
 public class Player : Entity
 {
-    private const float Speed = 180f;
-    private const int   Size    = 24;  // collision hitbox
-    private const int   HitSize = 28;  // attack hitbox
-    private const float HitPush = 36f; // offset from player center to attack hitbox center
+    private const float Speed    = 180f;
+    private const float DrawScale = 2f;
+    private const int   SizeW   = 24;  // collision hitbox width  ← tweak me
+    private const int   SizeH   = 40;  // collision hitbox height ← tweak me
+    private const int   Size    = SizeW; // kept for hitbox center calc (uses width)
+    private const int   HitSize = 56;  // attack hitbox
+    private const float HitPush = 72f; // offset from player center to attack hitbox center
 
-    // ── Attack phase timings (seconds) ───────────────────────────────────────
-    private const float StartupDuration  = 0.05f;
-    private const float ActiveDuration   = 0.07f;
-    private const float RecoveryDuration = 0.08f;
-    private const float LungeSpeed       = 200f;
+    // ── Attack phase timings — synced to 8-frame attack anim at 14 fps ───────
+    // Startup  : frames 0-1  (wind-up)   2 frames × 71 ms
+    // Active   : frames 2-4  (swing)     3 frames × 71 ms  ← hitbox live + lunge
+    // Recovery : frames 5-7  (follow-through) 3 frames × 71 ms
+    private const float AttackAnimFps    = 14f;
+    private const float StartupDuration  = 0.143f;
+    private const float ActiveDuration   = 0.214f;
+    private const float RecoveryDuration = 0.214f;
+
 
     // ── Sprite sheet layout ───────────────────────────────────────────────────
     // Each animation is a separate PNG. All use 64×64 frames at ~6.67 fps (150 ms/frame).
     // 4 direction rows per sheet: 0=Down, 1=Left, 2=Right, 3=Up
-    private const int   FrameW = 64;
-    private const int   FrameH = 64;
-    private const float AnimFps = 6.67f;
+    private const int FrameW = 64;
+    private const int FrameH = 64;
 
     private enum PlayerAnim { Idle, Walk, Attack, WalkAttack, Hurt, Death }
     private enum FacingDir  { Down = 0, Left = 1, Right = 2, Up = 3 }
 
-    // Frames per direction for each animation (from sprite sheet widths ÷ 64)
-    private static readonly int[] FrameCount = new int[(int)PlayerAnim.Death + 1];
+    // Frames per direction (sheet width ÷ 64) and FPS per animation
+    private static readonly int[]   FrameCount = new int  [(int)PlayerAnim.Death + 1];
+    private static readonly float[] AnimFps    = new float[(int)PlayerAnim.Death + 1];
     static Player()
     {
-        FrameCount[(int)PlayerAnim.Idle]       = 12; // 768px / 64
-        FrameCount[(int)PlayerAnim.Walk]       =  6; // 384px / 64
-        FrameCount[(int)PlayerAnim.Attack]     =  8; // 512px / 64
-        FrameCount[(int)PlayerAnim.WalkAttack] =  6; // 384px / 64
-        FrameCount[(int)PlayerAnim.Hurt]       =  5; // 320px / 64
-        FrameCount[(int)PlayerAnim.Death]      =  7; // 448px / 64
+        FrameCount[(int)PlayerAnim.Idle]       = 12; AnimFps[(int)PlayerAnim.Idle]       = 6.67f;
+        FrameCount[(int)PlayerAnim.Walk]       =  6; AnimFps[(int)PlayerAnim.Walk]       = 8f;
+        FrameCount[(int)PlayerAnim.Attack]     =  8; AnimFps[(int)PlayerAnim.Attack]     = AttackAnimFps;
+        FrameCount[(int)PlayerAnim.WalkAttack] =  6; AnimFps[(int)PlayerAnim.WalkAttack] = AttackAnimFps;
+        FrameCount[(int)PlayerAnim.Hurt]       =  5; AnimFps[(int)PlayerAnim.Hurt]       = 8f;
+        FrameCount[(int)PlayerAnim.Death]      =  7; AnimFps[(int)PlayerAnim.Death]      = 6f;
     }
 
     private static readonly string[] AssetKey =
@@ -68,10 +75,11 @@ public class Player : Entity
     private AttackPhase _phase    = AttackPhase.None;
     private float      _phaseTimer;
     private Vector2    _attackDir;
+    private bool       _attackedWhileMoving;  // picks WalkAttack vs Attack anim
     private Rectangle  _attackVisualBounds;
     private float      _hurtTimer;
 
-    public override Rectangle Bounds => new((int)Position.X, (int)Position.Y, Size, Size);
+    public override Rectangle Bounds => new((int)Position.X, (int)Position.Y, SizeW, SizeH);
     public Rectangle? AttackBounds { get; private set; }
 
     public Player(Vector2 startPosition, InputManager input, AssetManager assets, Func<Rectangle, bool> isSolid)
@@ -106,34 +114,30 @@ public class Player : Entity
 
         TickPhase(dt);
 
-        if (_phase == AttackPhase.None)
-        {
-            var moveVec = _input.GetMovementVector();
-            _isMoving = moveVec != Vector2.Zero;
+        // Movement is always allowed; attack direction locks at the moment of the swing
+        var moveVec = _input.GetMovementVector();
+        _isMoving = moveVec != Vector2.Zero;
 
-            if (_isMoving)
+        if (_isMoving)
+        {
+            if (_phase == AttackPhase.None)
             {
+                // Only update facing from movement when not attacking
                 _facing    = moveVec;
                 _facingDir = ToFacingDir(moveVec);
-                MoveWithCollision(moveVec * Speed * dt);
             }
-
-            if (_input.IsActionPressed(GameAction.Attack))
-            {
-                var inputVec = _input.GetMovementVector();
-                _attackDir  = inputVec != Vector2.Zero ? inputVec : _facing;
-                _facing     = _attackDir;
-                _facingDir  = ToFacingDir(_attackDir);
-                _phase      = AttackPhase.Startup;
-                _phaseTimer = StartupDuration;
-                _isMoving   = true;
-            }
+            MoveWithCollision(moveVec * Speed * dt);
         }
-        else
+
+        if (_phase == AttackPhase.None && _input.IsActionPressed(GameAction.Attack))
         {
-            _isMoving = _phase is AttackPhase.Startup or AttackPhase.Active;
-            if (_isMoving)
-                MoveWithCollision(_attackDir * LungeSpeed * dt);
+            var inputVec         = _input.GetMovementVector();
+            _attackDir           = inputVec != Vector2.Zero ? inputVec : _facing;
+            _facing              = _attackDir;
+            _facingDir           = ToFacingDir(_attackDir);
+            _attackedWhileMoving = _isMoving;
+            _phase               = AttackPhase.Startup;
+            _phaseTimer          = StartupDuration;
         }
 
         // Attack hitbox — live only during active window
@@ -155,7 +159,9 @@ public class Player : Entity
         var anim  = SelectAnim();
         int row   = (int)_facingDir;
         int count = FrameCount[(int)anim];
-        _animator.Play((int)anim, row, FrameW, FrameH, AnimFps, count);
+        float fps = AnimFps[(int)anim];
+        bool loop = anim is not (PlayerAnim.Attack or PlayerAnim.WalkAttack or PlayerAnim.Hurt or PlayerAnim.Death);
+        _animator.Play((int)anim, row, FrameW, FrameH, fps, count, loop);
         _animator.Update(dt);
     }
 
@@ -173,16 +179,19 @@ public class Player : Entity
     {
         var anim   = SelectAnim();
         var color  = HitCooldown > 0 ? Color.White * 0.5f : Color.White;
-        var center = new Vector2(Position.X + Size / 2f, Position.Y + Size / 2f);
+        var center = new Vector2(Position.X + SizeW / 2f, Position.Y + SizeH / 2f);
         var tex    = _textures[(int)anim];
 
         if (tex is not null)
-            SpriteRenderer.DrawFrameCentered(spriteBatch, tex, _animator.GetSourceRect(), center, color);
+            SpriteRenderer.DrawFrameCentered(spriteBatch, tex, _animator.GetSourceRect(), center, color, scale: DrawScale);
         else
             spriteBatch.Draw(_pixel, Bounds, HitCooldown > 0 ? Color.White : Color.Cyan);
 
         if (_phase == AttackPhase.Active)
             spriteBatch.Draw(_pixel, _attackVisualBounds, Color.Yellow * 0.8f);
+
+        // DEBUG: uncomment to visualise collision hitbox
+        // spriteBatch.Draw(_pixel, Bounds, Color.Red * 0.5f);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -191,8 +200,9 @@ public class Player : Entity
     {
         if (!IsAlive)       return PlayerAnim.Death;
         if (_hurtTimer > 0) return PlayerAnim.Hurt;
-        if (_phase is AttackPhase.Startup or AttackPhase.Active)
-            return _isMoving ? PlayerAnim.WalkAttack : PlayerAnim.Attack;
+        // Show attack animation through ALL phases so the full swing plays out
+        if (_phase != AttackPhase.None)
+            return _attackedWhileMoving ? PlayerAnim.WalkAttack : PlayerAnim.Attack;
         return _isMoving ? PlayerAnim.Walk : PlayerAnim.Idle;
     }
 

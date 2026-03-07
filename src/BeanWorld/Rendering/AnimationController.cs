@@ -18,19 +18,21 @@ public class AnimationController
     private int _frameCount;
     private int _currentFrame;
     private float _timer;
+    private bool _loop;
 
     /// <summary>
     /// Switch to a new animation and direction.
     /// <paramref name="animKey"/> identifies the animation state — the frame only resets
     /// when this changes, so calling Play() every frame with the same key is safe.
     /// <paramref name="row"/> is the direction row and can change freely without resetting the frame.
+    /// Pass <paramref name="loop"/>=false to hold on the last frame instead of looping.
     /// </summary>
-    public void Play(int animKey, int row, int frameWidth, int frameHeight, float fps, int frameCount)
+    public void Play(int animKey, int row, int frameWidth, int frameHeight, float fps, int frameCount, bool loop = true)
     {
         _row = row;
         if (_animKey == animKey) return;
-        (_animKey, _frameWidth, _frameHeight, _fps, _frameCount, _currentFrame, _timer)
-            = (animKey, frameWidth, frameHeight, fps, frameCount, 0, 0f);
+        (_animKey, _frameWidth, _frameHeight, _fps, _frameCount, _currentFrame, _timer, _loop)
+            = (animKey, frameWidth, frameHeight, fps, frameCount, 0, 0f, loop);
     }
 
     /// <summary>Advance the frame timer. Call once per Update().</summary>
@@ -41,8 +43,11 @@ public class AnimationController
         float frameDuration = 1f / _fps;
         while (_timer >= frameDuration)
         {
-            _timer        -= frameDuration;
-            _currentFrame  = (_currentFrame + 1) % _frameCount;
+            _timer -= frameDuration;
+            if (_loop)
+                _currentFrame = (_currentFrame + 1) % _frameCount;
+            else
+                _currentFrame = Math.Min(_currentFrame + 1, _frameCount - 1);
         }
     }
 
