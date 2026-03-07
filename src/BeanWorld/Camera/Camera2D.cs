@@ -10,6 +10,12 @@ namespace BeanWorld.Camera;
 public class Camera2D
 {
     private readonly Viewport _viewport;
+    private readonly Random _random = new();
+    private float _trauma;
+    private Vector2 _shakeOffset;
+
+    private const float MaxShakeOffset = 5f;
+    private const float TraumaDecayRate = 3.5f;
 
     public Vector2 Position { get; set; }
     public float Zoom { get; set; } = 1f;
@@ -28,10 +34,24 @@ public class Camera2D
     public Matrix GetTransform()
     {
         return
-            Matrix.CreateTranslation(-Position.X, -Position.Y, 0f) *
+            Matrix.CreateTranslation(-Position.X - _shakeOffset.X, -Position.Y - _shakeOffset.Y, 0f) *
             Matrix.CreateRotationZ(Rotation) *
             Matrix.CreateScale(Zoom, Zoom, 1f) *
             Matrix.CreateTranslation(_viewport.Width * 0.5f, _viewport.Height * 0.5f, 0f);
+    }
+
+    /// <summary>Adds trauma (0–1) to trigger screen shake. Accumulates, capped at 1.</summary>
+    public void Shake(float trauma) => _trauma = Math.Min(1f, _trauma + trauma);
+
+    /// <summary>Must be called each frame to decay shake.</summary>
+    public void UpdateShake(GameTime gameTime)
+    {
+        if (_trauma <= 0f) { _shakeOffset = Vector2.Zero; return; }
+        float intensity = _trauma * _trauma;
+        _shakeOffset = new Vector2(
+            (float)(_random.NextDouble() * 2 - 1) * MaxShakeOffset * intensity,
+            (float)(_random.NextDouble() * 2 - 1) * MaxShakeOffset * intensity);
+        _trauma = Math.Max(0f, _trauma - TraumaDecayRate * (float)gameTime.ElapsedGameTime.TotalSeconds);
     }
 
     /// <summary>Converts a screen-space position to world-space coordinates.</summary>

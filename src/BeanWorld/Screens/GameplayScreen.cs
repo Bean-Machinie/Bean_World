@@ -71,14 +71,23 @@ public class GameplayScreen : Screen
             return;
         }
 
+        int healthBefore = _player.Health;
         _entityManager.Update(gameTime);
+
+        if (_player.Health < healthBefore)
+            _camera.Shake(0.45f);
 
         if (_player.AttackBounds is Rectangle attackBounds)
         {
             foreach (var enemy in _entityManager.Entities.OfType<Enemy>())
             {
                 if (enemy.IsAlive && attackBounds.Intersects(enemy.Bounds))
+                {
                     enemy.TakeDamage(1);
+                    var knockDir = enemy.Position - _player.Position;
+                    enemy.ApplyKnockback(knockDir, 180f, 0.15f);
+                    _camera.Shake(0.15f);
+                }
             }
         }
 
@@ -108,6 +117,7 @@ public class GameplayScreen : Screen
 
         _camera.CenterOn(_player.Position);
         _camera.Clamp(_tileMap.Bounds);
+        _camera.UpdateShake(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

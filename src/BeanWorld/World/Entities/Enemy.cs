@@ -14,6 +14,7 @@ public class Enemy : Entity
     private readonly Func<Rectangle, bool> _isSolid;
     private Texture2D _texture = null!;
     private float _contactTimer;
+    private float _hitFlashTimer;
 
     public override Rectangle Bounds => new((int)Position.X, (int)Position.Y, 16, 16);
 
@@ -38,10 +39,11 @@ public class Enemy : Entity
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         if (_contactTimer > 0) _contactTimer -= dt;
+        if (_hitFlashTimer > 0) _hitFlashTimer -= dt;
 
-        // Move toward player when in agro range
+        // Move toward player when in agro range (skip if knocked back)
         var toPlayer = _player.Position - Position;
-        if (toPlayer.LengthSquared() < AgroRange * AgroRange && toPlayer != Vector2.Zero)
+        if (!IsKnockedBack && toPlayer.LengthSquared() < AgroRange * AgroRange && toPlayer != Vector2.Zero)
         {
             var step = Vector2.Normalize(toPlayer) * Speed * dt;
 
@@ -58,20 +60,36 @@ public class Enemy : Entity
         if (_contactTimer <= 0 && Bounds.Intersects(_player.Bounds))
         {
             _player.TakeDamage(1);
+            var knockDir = _player.Position - Position;
+            _player.ApplyKnockback(knockDir, 150f, 0.15f);
             _contactTimer = ContactCooldown;
         }
+    }
+
+    protected override void ApplyKnockbackStep(Vector2 delta)
+    {
+        var newX = Position with { X = Position.X + delta.X };
+        if (!_isSolid(new Rectangle((int)newX.X, (int)newX.Y, 16, 16)))
+            Position = newX;
+
+        var newY = Position with { Y = Position.Y + delta.Y };
+        if (!_isSolid(new Rectangle((int)newY.X, (int)newY.Y, 16, 16)))
+            Position = newY;
     }
 
     public override void TakeDamage(int amount)
     {
         base.TakeDamage(amount);
-        if (IsAlive) HitCooldown = 0.2f; // brief flash on hit
+        if (IsAlive)
+        {
+            HitCooldown = 0.2f;
+            _hitFlashTimer = 0.08f; // short bright flash, separate from i-frames
+        }
     }
 
     public override void Draw(SpriteBatch spriteBatch)
     {
-        // Flash white briefly when hit, otherwise red
-        var color = HitCooldown > 0 ? Color.White : Color.Red;
+        var color = _hitFlashTimer > 0 ? Color.White : Color.Red;
         spriteBatch.Draw(_texture, Bounds, color);
     }
 }

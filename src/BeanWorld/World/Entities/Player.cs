@@ -68,22 +68,30 @@ public class Player : Entity
                 Position = newY;
         }
 
-        // Attack — hitbox is only set on the exact frame the button is pressed
+        // Attack — on press, set the hitbox; keep it active for the full visual duration
         if (_input.IsActionPressed(GameAction.Attack) && _attackCooldownTimer <= 0)
         {
             var offset = _facing * Size;
-            AttackBounds = new Rectangle(
+            _attackVisualBounds  = new Rectangle(
                 (int)(Position.X + offset.X),
                 (int)(Position.Y + offset.Y),
                 Size, Size);
-            _attackVisualBounds  = AttackBounds.Value;
             _attackVisualTimer   = AttackDuration;
             _attackCooldownTimer = AttackCooldown;
         }
-        else
-        {
-            AttackBounds = null;
-        }
+
+        AttackBounds = _attackVisualTimer > 0 ? _attackVisualBounds : null;
+    }
+
+    protected override void ApplyKnockbackStep(Vector2 delta)
+    {
+        var newX = Position with { X = Position.X + delta.X };
+        if (!_isSolid(new Rectangle((int)newX.X, (int)newX.Y, Size, Size)))
+            Position = newX;
+
+        var newY = Position with { Y = Position.Y + delta.Y };
+        if (!_isSolid(new Rectangle((int)newY.X, (int)newY.Y, Size, Size)))
+            Position = newY;
     }
 
     public override void TakeDamage(int amount)

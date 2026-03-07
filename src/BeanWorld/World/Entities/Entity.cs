@@ -23,6 +23,10 @@ public abstract class Entity
     /// </summary>
     protected float HitCooldown;
 
+    private Vector2 _knockbackVelocity;
+    private float _knockbackTimer;
+    protected bool IsKnockedBack => _knockbackTimer > 0;
+
     /// <summary>
     /// Axis-aligned bounding box used for collision and camera targeting.
     /// Override to return a meaningful bounds relative to Position.
@@ -45,8 +49,27 @@ public abstract class Entity
     /// </summary>
     public virtual void Update(GameTime gameTime)
     {
-        if (HitCooldown > 0)
-            HitCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (HitCooldown > 0) HitCooldown -= dt;
+        if (_knockbackTimer > 0)
+        {
+            ApplyKnockbackStep(_knockbackVelocity * dt);
+            _knockbackTimer -= dt;
+            if (_knockbackTimer <= 0) _knockbackVelocity = Vector2.Zero;
+        }
+    }
+
+    /// <summary>
+    /// Applies a single frame of knockback displacement.
+    /// Override in subclasses to add collision checking.
+    /// </summary>
+    protected virtual void ApplyKnockbackStep(Vector2 delta) => Position += delta;
+
+    public void ApplyKnockback(Vector2 direction, float force, float duration = 0.15f)
+    {
+        if (direction == Vector2.Zero) return;
+        _knockbackVelocity = Vector2.Normalize(direction) * force;
+        _knockbackTimer = duration;
     }
 
     public abstract void Draw(SpriteBatch spriteBatch);
